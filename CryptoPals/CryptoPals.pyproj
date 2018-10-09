@@ -26,7 +26,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="CryptoPals.py" />
-    <Compile Include="Set1.py">
+    <Compile Include="Test_Set1.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
