@@ -30,6 +30,7 @@ def KeyExpansion(oldkey,round):
 def RoundKeys(initkey,rounds):
     w = [initkey[i:i + 4] for i in range(0, len(initkey), 4)]
     r=[]
+    r.append(initkey)
     rb = 1
     for round in range(1,rounds+1):
         g = w[-1]
@@ -82,6 +83,21 @@ sboxaarry_np = np.array(sboxarray).reshape(16,16)
 def SBox(bin):
     z = [sboxaarry_np[n] for n in [nibbles(b) for b in bin]]
     return bytes(z)
+
+def SubBytes(bin):
+    return SBox(bin)
+
+def ShiftRows(bin):
+    m = np.array(bytearray(bin)).reshape(4,4)
+    m[:,1]=np.roll(m[:,1], -1, axis=0)
+    m[:,2]=np.roll(m[:,2], -2, axis=0)
+    m[:,3]=np.roll(m[:,3], -3, axis=0)
+
+    r = np.ndarray.tobytes(m)
+    return r
+
+def MixColumns(bin):
+    return bin
 
 def AddRound(bin,round):
     r = bytearray(bin)

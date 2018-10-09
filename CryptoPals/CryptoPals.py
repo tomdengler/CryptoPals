@@ -197,13 +197,13 @@ def PadPKCS7(str,blocksize):
     
 
 def main():
-    key = b"Thats my Kung Fu"
-    correct_answer = bytes.fromhex("E2 32 FC F1 91 12 91 88 B1 59 E4 E6 D6 79 A2 93".replace(" ",""))
-    answer = AES.KeyExpansion(key,round)
-    print(AES.ShowState2(answer))
-    roundkeys = AES.RoundKeys(key,10)
-    for rk in roundkeys:
-        print(AES.ShowState2(rk))
+    idat=" d4  27  11  ae  e0  bf  98  f1  b8  b4  5d  e5  1e  41  52  30 "
+    odat=" d4  bf  5d  30  e0  b4  52  ae  b8  41  11  f1  1e  27  98  e5 "
+    idat = bytes.fromhex(idat)
+    odat = bytes.fromhex(odat)
+    t = AES.ShiftRows(idat)
+    print(AES.ShowState(idat))
+    print(AES.ShowState(t))
     print("hey")   
   
 if __name__== "__main__":
