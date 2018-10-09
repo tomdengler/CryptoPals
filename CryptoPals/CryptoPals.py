@@ -4,6 +4,7 @@ import numpy
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import AES
+import GaliousMath
 
 def HexStringToBase64(input):
     return base64.b64encode( bytearray.fromhex(input))
@@ -197,13 +198,12 @@ def PadPKCS7(str,blocksize):
     
 
 def main():
-    idat=" d4  27  11  ae  e0  bf  98  f1  b8  b4  5d  e5  1e  41  52  30 "
-    odat=" d4  bf  5d  30  e0  b4  52  ae  b8  41  11  f1  1e  27  98  e5 "
+    idat=" d4  bf  5d  30  e0  b4  52  ae  b8  41  11  f1  1e  27  98  e5 "
+    odat=" 04  66  81  e5  e0  cb  19  9a  48  f8  d3  7a  28  06  26  4c "
     idat = bytes.fromhex(idat)
     odat = bytes.fromhex(odat)
-    t = AES.ShiftRows(idat)
-    print(AES.ShowState(idat))
-    print(AES.ShowState(t))
+    r = AES.MixColumns(idat)
+    print(AES.ShowState2(r))
     print("hey")   
   
 if __name__== "__main__":

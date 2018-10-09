@@ -1,5 +1,6 @@
 import numpy as np
 import binascii
+import GaliousMath
 
 def XOR(byteArray1, byteArray2):
     return bytes(a ^ b for a, b in zip(byteArray1,byteArray2))
@@ -97,7 +98,11 @@ def ShiftRows(bin):
     return r
 
 def MixColumns(bin):
-    return bin
+    m = np.array(bytearray(bin)).reshape(4,4)
+    r=b''
+    for i in range(4):
+        r+= GaliousMath.gmix_column(bin[i*4:4+i*4]) 
+    return r
 
 def AddRound(bin,round):
     r = bytearray(bin)

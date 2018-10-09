@@ -1,6 +1,7 @@
 ﻿import unittest
 import CryptoPals
 import AES
+import GaliousMath
 
 class Test_Set1(unittest.TestCase):
     def test_Challenge1_hex_to_base64(self):
@@ -215,6 +216,21 @@ class Test_Set1(unittest.TestCase):
         idat = bytes.fromhex(idat)
         odat = bytes.fromhex(odat)
         self.assertEqual(odat,AES.MixColumns(idat))
+
+    def test_Challenge7_AES_gmix_column(self):
+        self.assertEqual(0x09,GaliousMath.gmultiply(0x03,0x07))
+        tests = (("db 13 53 45", "8e 4d a1 bc"),
+        ("f2 0a 22 5c", "9f dc 58 9d"),
+        ("01 01 01 01", "01 01 01 01"),
+        ("c6 c6 c6 c6", "c6 c6 c6 c6"),
+        ("d4 d4 d4 d5", "d5 d5 d7 d6"),
+        ("2d 26 31 4c", "4d 7e bd f8"))
+
+        for i in range(len(tests)):
+            a = bytes.fromhex(tests[i][0])
+            b = bytes.fromhex(tests[i][1])
+            z = GaliousMath.gmix_column(a)
+            self.assertEqual(b,z)
 
 
 if __name__ == '__main__':
