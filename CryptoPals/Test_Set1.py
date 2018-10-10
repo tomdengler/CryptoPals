@@ -232,7 +232,7 @@ class Test_Set1(unittest.TestCase):
             z = GaliousMath.gmix_column(a)
             self.assertEqual(b,z)
 
-    def test_Challenge7_AES_Decrypt1(self):
+    def test_Challenge7_AES_Encrypt(self):
         idat="32 43 f6 a8 88 5a 30 8d 31 31 98 a2 e0 37 07 34"
         key="2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c"
         valid="39 25 84 1d 02 dc 09 fb dc 11 85 97 19 6a 0b 32"
@@ -241,6 +241,25 @@ class Test_Set1(unittest.TestCase):
         valid = bytes.fromhex(valid)
         encrypt = AES.EncryptBlockECB(idat,key)
         self.assertEqual(encrypt,valid)
+
+    def test_Challenge7_AES_Decrypt1(self):
+        idat="69c4e0d86a7b0430d8cdb78070b4c55a"
+        key ="000102030405060708090a0b0c0d0e0f"
+        valid = "00112233445566778899aabbccddeeff"
+        idat = bytes.fromhex(idat)
+        key = bytes.fromhex(key)
+        valid = bytes.fromhex(valid)
+        decrypt=AES.DecryptBlockECB(idat,key)
+        self.assertEqual(decrypt,valid)
+
+    def test_Challenge7_AES_Decrypt2(self):
+        key = b"YELLOW SUBMARINE"
+        dat = CryptoPals.BytearrayFromBase64File("7.txt")
+        block = dat[0:16]
+        plaintext = AES.DecryptBlockECB(block,key)
+        self.assertEqual(plaintext[0:16],b"I'm back and I'm")
+
+
 
 if __name__ == '__main__':
     unittest.main()

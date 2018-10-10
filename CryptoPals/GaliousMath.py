@@ -31,6 +31,13 @@ def gmix_column(a):
     r.append( gmultiply(a[3],2) ^ gmultiply(a[2],1) ^ gmultiply(a[1],1) ^ gmultiply(a[0],3))
     return bytes(r)
 
+def inv_gmix_column(a):
+    r=[]
+    r.append( gmultiply(a[0],0x0e) ^ gmultiply(a[3],0x09) ^ gmultiply(a[2],0x0d) ^ gmultiply(a[1],0x0b))
+    r.append( gmultiply(a[1],0x0e) ^ gmultiply(a[0],0x09) ^ gmultiply(a[3],0x0d) ^ gmultiply(a[2],0x0b))
+    r.append( gmultiply(a[2],0x0e) ^ gmultiply(a[1],0x09) ^ gmultiply(a[0],0x0d) ^ gmultiply(a[3],0x0b))
+    r.append( gmultiply(a[3],0x0e) ^ gmultiply(a[2],0x09) ^ gmultiply(a[1],0x0d) ^ gmultiply(a[0],0x0b))
+    return bytes(r)
 
 #/* Log table using 0xe5 (229) as the generator */
 ltable = [
