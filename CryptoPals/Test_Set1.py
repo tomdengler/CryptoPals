@@ -232,6 +232,15 @@ class Test_Set1(unittest.TestCase):
             z = GaliousMath.gmix_column(a)
             self.assertEqual(b,z)
 
+    def test_Challenge7_AES_Decrypt1(self):
+        idat="32 43 f6 a8 88 5a 30 8d 31 31 98 a2 e0 37 07 34"
+        key="2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c"
+        valid="39 25 84 1d 02 dc 09 fb dc 11 85 97 19 6a 0b 32"
+        idat = bytes.fromhex(idat)
+        key = bytes.fromhex(key)
+        valid = bytes.fromhex(valid)
+        encrypt = AES.EncryptBlockECB(idat,key)
+        self.assertEqual(encrypt,valid)
 
 if __name__ == '__main__':
     unittest.main()

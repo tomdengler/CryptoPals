@@ -198,12 +198,28 @@ def PadPKCS7(str,blocksize):
     
 
 def main():
-    idat=" d4  bf  5d  30  e0  b4  52  ae  b8  41  11  f1  1e  27  98  e5 "
-    odat=" 04  66  81  e5  e0  cb  19  9a  48  f8  d3  7a  28  06  26  4c "
+    idat="32 43 f6 a8 88 5a 30 8d 31 31 98 a2 e0 37 07 34"
+    key="2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c"
+    valid="39 25 84 1d 02 dc 09 fb dc 11 85 97 19 6a 0b 32"
     idat = bytes.fromhex(idat)
-    odat = bytes.fromhex(odat)
-    r = AES.MixColumns(idat)
-    print(AES.ShowState2(r))
+    key = bytes.fromhex(key)
+    valid = bytes.fromhex(valid)
+
+    roundkeys = AES.RoundKeys(key,10)
+    state = AES.XOR(idat,roundkeys[0])
+    #print(AES.ShowState(state))
+    for round in range(1,11):
+        print(round,AES.ShowState(state))
+        state = AES.SubBytes(state)        
+        state = AES.ShiftRows(state)
+        if round!=10:
+            state = AES.MixColumns(state)
+        state = AES.XOR(state,roundkeys[round])
+    print("output :",AES.ShowState(state))
+    encrypt = AES.EncryptBlockECB(idat,key)
+    print("Decrypt:",AES.ShowState(encrypt))
+    print("valid  :",AES.ShowState(valid))
+
     print("hey")   
   
 if __name__== "__main__":

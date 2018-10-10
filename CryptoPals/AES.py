@@ -108,3 +108,14 @@ def AddRound(bin,round):
     r = bytearray(bin)
     r[0] = r[0] ^ round
     return bytes(r)
+
+def EncryptBlockECB(block,key):
+    roundkeys = RoundKeys(key,10)
+    state = XOR(block,roundkeys[0])
+    for round in range(1,11):
+        state = SubBytes(state)        
+        state = ShiftRows(state)
+        if round!=10:
+            state = MixColumns(state)
+        state = XOR(state,roundkeys[round])
+    return state
