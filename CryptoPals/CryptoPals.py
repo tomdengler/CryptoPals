@@ -199,9 +199,10 @@ def PadPKCS7(str,blocksize):
 
 def main():
     key = b"YELLOW SUBMARINE"
-    dat =  BytearrayFromBase64File("7.txt")
-    block = dat[0:16]
-    plaintext = AES.DecryptBlockECB(block,key)
+    dat =  BytearrayFromBase64File("10.txt")
+    iv=b'\x00'*16    
+    t1 = AES.DecryptBlocksCBC(dat,key,iv,100)
+
     print("hey")   
   
 if __name__== "__main__":

@@ -160,10 +160,15 @@ def EncryptBlockECB(block,key):
         state = XOR(state,roundkeys[round])
     return state
 
-def DecryptBlockECB(block,key):
+def RoundKeysForDecryptECB(key):
     roundkeys = RoundKeys(key,10)
     for round in range(1,10):
        roundkeys[round] = InvMixColumns(roundkeys[round])
+    return roundkeys
+
+def DecryptBlockECB(block,key,roundkeys=None):
+    if (roundkeys==None):
+        roundkeys = RoundKeysForDecryptECB(key)
     state = XOR(block,roundkeys[10])
     for round in range(10,0,-1):
         state = InvSubBytes(state)        
@@ -172,3 +177,17 @@ def DecryptBlockECB(block,key):
             state = InvMixColumns(state)
         state = XOR(state,roundkeys[round-1])
     return state
+
+def DecryptBlocksCBC(dat,key,iv,maxblocks=0):
+    retPlaintext = b''
+    blocks=[dat[i:i + 16] for i in range(0, len(dat), 16)]
+    if maxblocks==0:
+        maxblocks=len(blocks)
+    roundkeys=RoundKeysForDecryptECB(key)
+    for block in blocks[0:maxblocks]:
+        pblock = block
+        plaintext = DecryptBlockECB(block,key,roundkeys)
+        plaintext = XOR(iv,plaintext)
+        retPlaintext+=plaintext
+        iv=pblock
+    return retPlaintext

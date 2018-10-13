@@ -72,13 +72,6 @@ class Test_Set1(unittest.TestCase):
                 AESECBlinenum = linenum
         self.assertEqual(AESECBlinenum,133)
 
-    def test_Challenge9_Pad4Block16(self):
-        s = "YELLOW SUBMARINE"
-        padded = CryptoPals.PadPKCS7(s,20)
-        self.assertEqual(padded,"YELLOW SUBMARINE\x04\x04\x04\x04")
-        padded = CryptoPals.PadPKCS7(s,16)
-        self.assertEqual(padded,"YELLOW SUBMARINE\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10")
-
     def test_Challenge7_AES_KeyExpansion(self):
         key = b"Thats my Kung Fu"
         correct_answer = bytes.fromhex("E2 32 FC F1 91 12 91 88 B1 59 E4 E6 D6 79 A2 93".replace(" ",""))

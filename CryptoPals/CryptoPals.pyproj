@@ -29,6 +29,9 @@
     <Compile Include="GaliousMath.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Test_Set2.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Test_Set1.py">
       <SubType>Code</SubType>
     </Compile>
