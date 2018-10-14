@@ -1,17 +1,12 @@
 ﻿import base64
 from itertools import groupby
 import numpy
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 import AES
 import GaliousMath
 import random
 
 def HexStringToBase64(input):
     return base64.b64encode( bytearray.fromhex(input))
-
-def XOR(byteArray1, byteArray2):
-    return bytes(a ^ b for a, b in zip(byteArray1,byteArray2))
 
 def RandomBytes(len):
     return bytes([random.randint(0,255) for b in range(0,len)])
@@ -80,7 +75,6 @@ def RemoveWhitespace(string):
     string = string.replace('.','')
     return string
 
-
 def EnglishTextScore(string):
     lc_input = string.lower()
     lc_input = lc_input.replace(' ','')
@@ -117,7 +111,7 @@ def repeat_to_length(s, wanted):
 
 def RepeatingKeyXor(bytearray_input,bytearray_key):
     key = repeat_to_length(bytearray_key,len(bytearray_input))
-    return XOR(key,bytearray_input)
+    return AES.XOR(key,bytearray_input)
 
 def bitcount(somebyte):
     count = 0
@@ -131,7 +125,7 @@ def bitcount(somebyte):
 def HammingDistance(bytearray1,bytearray2):
     """Calculate the Hamming distance between two byte arrays strings"""
     assert len(bytearray1) == len(bytearray2)
-    x = XOR(bytearray1,bytearray2)
+    x = AES.XOR(bytearray1,bytearray2)
     count = 0
     for abyte in x:
         count += bitcount(abyte)
@@ -197,12 +191,6 @@ def FindRepeatingXORKey(dat,keylen):
         actualKey.append(key)
     return actualKey
 
-def DecryptAESECB(dat,key):
-    cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
-    decryptor = cipher.decryptor()
-    plaintext = decryptor.update(dat) + decryptor.finalize()
-    return plaintext
-
 def BewareTheRanger():
     plaintext = open("BewareTheRanger.txt", "r").read()
     return plaintext    
@@ -221,10 +209,7 @@ def main():
     dat = datbefore+dat+datafter
 
     enc1 = AES.EncryptBlocksECB(dat,key)
-    enc2 = AES.EncryptBlocksCBC(dat,key,iv)
-
-
-    
+    enc2 = AES.EncryptBlocksCBC(dat,key,iv)    
 
     print("hey")   
   

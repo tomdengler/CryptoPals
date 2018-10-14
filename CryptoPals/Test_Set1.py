@@ -13,7 +13,7 @@ class Test_Set1(unittest.TestCase):
     def test_Challenge2_FixedXOR(self):
         input1 = bytearray.fromhex("1c0111001f010100061a024b53535009181c")
         input2 = bytearray.fromhex("686974207468652062756c6c277320657965")
-        output = CryptoPals.XOR(input1,input2)
+        output = AES.XOR(input1,input2)
         valid_output = bytearray.fromhex("746865206b696420646f6e277420706c6179")
         self.assertEqual(output,valid_output)
 
@@ -57,7 +57,7 @@ class Test_Set1(unittest.TestCase):
     def test_Challenge7_CanDecryptAESECB(self):
         key = b"YELLOW SUBMARINE"
         dat =  CryptoPals.BytearrayFromBase64File("7.txt")
-        plaintext = CryptoPals.DecryptAESECB(dat,key)
+        plaintext = AES.DecryptBlocksECB(dat,key)
         self.assertEqual(plaintext[0:16],b"I'm back and I'm")
         self.assertEqual(plaintext[16:32],b" ringin' the bel")
 
