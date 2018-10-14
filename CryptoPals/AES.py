@@ -166,6 +166,10 @@ def RoundKeysForDecryptECB(key):
        roundkeys[round] = InvMixColumns(roundkeys[round])
     return roundkeys
 
+def RoundKeysForEncryptECB(key):
+    roundkeys = RoundKeys(key,10)
+    return roundkeys
+
 def DecryptBlockECB(block,key,roundkeys=None):
     if (roundkeys==None):
         roundkeys = RoundKeysForDecryptECB(key)
@@ -181,7 +185,8 @@ def DecryptBlockECB(block,key,roundkeys=None):
 def DecryptBlocksCBC(dat,key,iv,maxblocks=0):
     retPlaintext = b''
     blocks=[dat[i:i + 16] for i in range(0, len(dat), 16)]
-    if maxblocks==0:
+    dropPadding = maxblocks==0
+    if dropPadding:
         maxblocks=len(blocks)
     roundkeys=RoundKeysForDecryptECB(key)
     for block in blocks[0:maxblocks]:
@@ -190,4 +195,54 @@ def DecryptBlocksCBC(dat,key,iv,maxblocks=0):
         plaintext = XOR(iv,plaintext)
         retPlaintext+=plaintext
         iv=pblock
+    if dropPadding:
+        dropbytes=ord(plaintext[-1:])
+        retPlaintext= retPlaintext[:-dropbytes]
     return retPlaintext
+
+def PadPKCS7(bin,blocksize):
+    remainder = blocksize-(len(bin) % blocksize)
+    pad=bytes(chr(remainder),'utf8')
+    return bin+pad*remainder
+
+def EncryptBlocksCBC(str,key,iv,maxblocks=0):
+    retBytes = b''
+    dat = PadPKCS7(str,16)
+    blocks=[dat[i:i + 16] for i in range(0, len(dat), 16)]
+    if maxblocks==0:
+        maxblocks=len(blocks)
+    roundkeys=RoundKeysForDecryptECB(key)
+    for block in blocks[0:maxblocks]:
+        xblock = XOR(block,iv)
+        enc = EncryptBlockECB(xblock,key)
+        retBytes+=enc
+        iv=enc
+    return retBytes
+
+def EncryptBlocksECB(str,key,maxblocks=0):
+    retBytes = b''
+    dat = PadPKCS7(str,16)
+    blocks=[dat[i:i + 16] for i in range(0, len(dat), 16)]
+    if maxblocks==0:
+        maxblocks=len(blocks)
+    roundkeys=RoundKeysForEncryptECB(key)
+    for block in blocks[0:maxblocks]:
+        enc = EncryptBlockECB(block,key)
+        retBytes+=enc
+    return retBytes
+
+def DecryptBlocksECB(dat,key,maxblocks=0):
+    retPlaintext = b''
+    blocks=[dat[i:i + 16] for i in range(0, len(dat), 16)]
+    dropPadding = maxblocks==0
+    if dropPadding:
+        maxblocks=len(blocks)
+    roundkeys=RoundKeysForDecryptECB(key)
+    for block in blocks[0:maxblocks]:
+        plaintext = DecryptBlockECB(block,key,roundkeys)
+        retPlaintext+=plaintext
+    if dropPadding:
+        dropbytes=ord(plaintext[-1:])
+        retPlaintext= retPlaintext[:-dropbytes]
+    return retPlaintext
+

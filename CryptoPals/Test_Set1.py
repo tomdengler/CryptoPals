@@ -252,6 +252,14 @@ class Test_Set1(unittest.TestCase):
         plaintext = AES.DecryptBlockECB(block,key)
         self.assertEqual(plaintext[0:16],b"I'm back and I'm")
 
+    def test_Challenge7_AESECB_on_moredata(self):
+        key = b"YELLOW SUBMARINE"
+        dat = CryptoPals.BewareTheRanger()
+        dat = bytes(dat,'utf8')
+        enc1 = AES.EncryptBlocksECB(dat,key)
+        dec1 = AES.DecryptBlocksECB(enc1,key)
+        self.assertEqual(dat,dec1)
+
 
 
 if __name__ == '__main__':

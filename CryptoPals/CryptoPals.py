@@ -5,12 +5,16 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import AES
 import GaliousMath
+import random
 
 def HexStringToBase64(input):
     return base64.b64encode( bytearray.fromhex(input))
 
 def XOR(byteArray1, byteArray2):
     return bytes(a ^ b for a, b in zip(byteArray1,byteArray2))
+
+def RandomBytes(len):
+    return bytes([random.randint(0,255) for b in range(0,len)])
 
 def FindSingleByteKey(bytearray1):
     low = 1000
@@ -69,6 +73,13 @@ def EnglishTextChiScore(string):
             #  print(a)
             r = r+lc_input.count(a)**2
     return r/len(lc_input)
+
+def RemoveWhitespace(string):
+    string = string.replace(' ','')
+    string = string.replace(',','')
+    string = string.replace('.','')
+    return string
+
 
 def EnglishTextScore(string):
     lc_input = string.lower()
@@ -192,16 +203,28 @@ def DecryptAESECB(dat,key):
     plaintext = decryptor.update(dat) + decryptor.finalize()
     return plaintext
 
-def PadPKCS7(str,blocksize):
-    remainder = blocksize-(len(str) % blocksize)
-    return str+chr(remainder)*remainder
-    
+def BewareTheRanger():
+    plaintext = open("BewareTheRanger.txt", "r").read()
+    return plaintext    
+
+def chunks(dat,chunksize):
+    return [dat[i:i + chunksize] for i in range(0, len(dat), chunksize)]
 
 def main():
-    key = b"YELLOW SUBMARINE"
-    dat =  BytearrayFromBase64File("10.txt")
-    iv=b'\x00'*16    
-    t1 = AES.DecryptBlocksCBC(dat,key,iv,100)
+
+    key = RandomBytes(16)
+    dat = BewareTheRanger()
+    dat = bytes(dat,'utf8')
+    iv = RandomBytes(16)
+    datbefore = RandomBytes(random.randint(5,10))
+    datafter = RandomBytes(random.randint(5,10))
+    dat = datbefore+dat+datafter
+
+    enc1 = AES.EncryptBlocksECB(dat,key)
+    enc2 = AES.EncryptBlocksCBC(dat,key,iv)
+
+
+    
 
     print("hey")   
   
