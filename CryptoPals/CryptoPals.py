@@ -4,6 +4,11 @@ import numpy
 import AES
 import GaliousMath
 import random
+from enum import Enum
+import pickle
+import binascii
+
+challenge12key = b'f56f1855a2d09d0e5de5532cf5c583ca'
 
 def HexStringToBase64(input):
     return base64.b64encode( bytearray.fromhex(input))
@@ -88,6 +93,17 @@ def EnglishTextScore(string):
         else:
             print(a)
     return r/len(lc_input)
+
+def VarOfDist(bytearray1):
+    mylist = list(bytearray1)
+    mylist.sort()
+    t = groupby(mylist)
+    newlist = []
+    for key,group in t:
+        newlist.append(len(list(group)))
+    newlist.sort(reverse=True)
+    var = numpy.var(newlist)
+    return var
 
 def LooksLikeEnglishScore(bytearray1):
     mylist = list(bytearray1)
@@ -198,18 +214,151 @@ def BewareTheRanger():
 def chunks(dat,chunksize):
     return [dat[i:i + chunksize] for i in range(0, len(dat), chunksize)]
 
+class AESMode(Enum):
+    ECB = 1
+    CBC = 2
+
+class AESInstance:
+    pass
+
+def persist(f,someAesInstance):
+    pickle.dump( someAesInstance,f)
+
+def generate(filename,count):
+
+    # datsource = BewareTheRanger()
+    datsource = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    datmiddle = bytes(datsource,'utf8')
+    
+    f = open(filename,'wb')
+
+    for t in range(count):
+        print(t)
+        key = RandomBytes(16)
+        iv = RandomBytes(16)
+        datbefore = RandomBytes(random.randint(5,10))
+        datafter = RandomBytes(random.randint(5,10))
+        dat = datbefore+datmiddle+datafter
+        mode = AESMode(random.randint(1,2))
+        if (mode==AESMode.CBC):
+            enc = AES.EncryptBlocksCBC(dat,key,iv)
+        else:
+            enc = AES.EncryptBlocksECB(dat,key)
+        aes = AESInstance()
+        aes.instance = t
+        aes.key = key
+        aes.iv = iv
+        aes.mode = mode
+        aes.enc = enc
+        aes.lenBefore = len(datbefore)
+        aes.lenAfter = len(datafter)
+        persist(f,aes)
+
+    f.close()
+
+def AESOracle(dat):
+    blocks = chunks(dat,16)
+    unique = set()
+    for block in blocks:
+        if not block in unique:
+            unique.add(block)
+        else:
+            return AESMode.ECB
+    return AESMode.CBC
+
+def AESOracle2(dat):
+    # this oracle is not entirely accurate 
+    # but is worth retaining for some of the 
+    # ideas
+    mode = AESMode(random.randint(1,2))
+
+    score = LooksLikeEnglishScore(dat)
+
+    blocks = chunks(dat,16) 
+    
+    scores=[]
+    for col in range(16):   
+        t0 = bytearray([b[col] for b in blocks])
+        scores.append(VarOfDist(t0)) 
+    avg = sum(scores)/16           
+
+    if avg>0.5:
+        mode=AESMode.ECB
+    else:
+        mode=AESMode.CBC
+
+    return mode
+
+def Challenge12():
+    unk_raw = ("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
+           "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
+           "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg"
+           "YnkK")
+    unknown_string = base64.b64decode(unk_raw)
+
+    encprior = b''
+    for i in range(5,50):
+         beforedat=bytes('A','utf8')*i
+         dat = beforedat+unknown_string
+         enc = AES.EncryptBlocksECB(dat,challenge12key)
+         if enc[:i-1]==encprior[:i-1]:
+             blocksize = i-1
+             
+             print("The blocksize is : ",blocksize)
+             print("{} : {}".format(i,binascii.hexlify(enc[:36])))
+             break
+         encprior=enc[:i]
+
+    beforedat=bytes('A','utf8')*blocksize*2
+    dat = beforedat+unknown_string
+    enc = AES.EncryptBlocksECB(dat,challenge12key)
+    print("AESMode:",AESOracle2(enc))
+
+    datbefore = bytes('A','utf8')*(blocksize-1)
+    firstchardict = dict()
+    for i in range(256):
+        dat = datbefore+bytes(chr(i),'utf8')
+        enc = AES.EncryptBlocksECB(dat,challenge12key)
+        firstchardict[enc[:16]]=bytes(chr(i),'utf8')
+
+    datbefore = bytes('A','utf8')*(blocksize-1)
+    dat = datbefore+unknown_string
+    enc = AES.EncryptBlocksECB(dat,challenge12key)
+    lookup = enc[:16]
+    firstchar = firstchardict[lookup]
+    print("The first char of the unknown string is: ",firstchar)
+
+    return unknown_string
+
+
+
+
+
+
 def main():
 
-    key = RandomBytes(16)
-    dat = BewareTheRanger()
-    dat = bytes(dat,'utf8')
-    iv = RandomBytes(16)
-    datbefore = RandomBytes(random.randint(5,10))
-    datafter = RandomBytes(random.randint(5,10))
-    dat = datbefore+dat+datafter
+    # Challenge12()
+    # return None
 
-    enc1 = AES.EncryptBlocksECB(dat,key)
-    enc2 = AES.EncryptBlocksCBC(dat,key,iv)    
+    filename = 'aesrec2.pickle'
+    count = 100
+    # generate(filename,count)
+
+    f = open(filename,'rb')
+
+    correctCount = 0
+    for t in range(count):
+        xyz = pickle.load(f)
+        print(xyz.mode)
+        guess = AESOracle2(xyz.enc)
+        
+        if guess==xyz.mode:
+            correctCount+=1
+
+    f.close()
+
+    print("Percent correct {} of {} : {}".format(correctCount, count, 100*correctCount/count))
+
 
     print("hey")   
   

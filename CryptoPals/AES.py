@@ -149,8 +149,9 @@ def AddRound(bin,round):
     r[0] = r[0] ^ round
     return bytes(r)
 
-def EncryptBlockECB(block,key):
-    roundkeys = RoundKeys(key,10)
+def EncryptBlockECB(block,key,roundkeys=None):
+    if roundkeys==None:
+        roundkeys = RoundKeys(key,10)
     state = XOR(block,roundkeys[0])
     for round in range(1,11):
         state = SubBytes(state)        
@@ -211,10 +212,10 @@ def EncryptBlocksCBC(str,key,iv,maxblocks=0):
     blocks=[dat[i:i + 16] for i in range(0, len(dat), 16)]
     if maxblocks==0:
         maxblocks=len(blocks)
-    roundkeys=RoundKeysForDecryptECB(key)
+    roundkeys=RoundKeysForEncryptECB(key)
     for block in blocks[0:maxblocks]:
         xblock = XOR(block,iv)
-        enc = EncryptBlockECB(xblock,key)
+        enc = EncryptBlockECB(xblock,key,roundkeys)
         retBytes+=enc
         iv=enc
     return retBytes
@@ -227,7 +228,7 @@ def EncryptBlocksECB(str,key,maxblocks=0):
         maxblocks=len(blocks)
     roundkeys=RoundKeysForEncryptECB(key)
     for block in blocks[0:maxblocks]:
-        enc = EncryptBlockECB(block,key)
+        enc = EncryptBlockECB(block,key,roundkeys)
         retBytes+=enc
     return retBytes
 
