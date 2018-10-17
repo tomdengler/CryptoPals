@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 challenge12key = b'f56f1855a2d09d0e5de5532cf5c583ca'
+challenge13key = challenge12key
 
 def HexStringToBase64(input):
     return base64.b64encode( bytearray.fromhex(input))
@@ -343,13 +344,11 @@ def ascii_order():
     ord_nonascii = list(set(i for i in range(256))-set(ord_myascii))
     return ord_myascii+ord_nonascii
 
-
 def Challenge12():   
 
     encprior = b''
     for i in range(5,50):
          datbefore=bytes('A','utf8')*i
-         # enc = EncryptForChallenge12(datbefore)
          enc = EncryptForChallenge12_CypherModule(datbefore)
          if enc[:i-1]==encprior[:i-1]:
              blocksize = i-1
@@ -408,14 +407,55 @@ def Challenge11():
 
     print("Percent correct {} of {} : {}".format(correctCount, count, 100*correctCount/count))
 
+def kv_parser(str):
+    parts = str.split("&")
+    kv = dict()
+    for part in parts:
+        k,v = part.split("=")
+        kv[k]=v
+    return kv
+
+def profile_for(email):
+    email = email.replace("&","")
+    email = email.replace("=","")
+    profile = dict()
+    profile["email"]=email
+    profile["uid"]=10
+    profile["role"]="user"
+    return profile
+
+def encode_profile(profile):
+    return "email={}&uid={}&role={}".format(profile['email'],profile['uid'],profile['role'])
+
+def C13_encrypted_user_input(email):
+    profile = profile_for(email)
+    encoded = bytes(encode_profile(profile),'utf8')
+    encrypted=AES.EncryptBlocksECB(encoded,challenge13key)
+    return encrypted
+
+def C13_decode_encrypted_profile(enc):
+    dec = AES.DecryptBlocksECB(enc,challenge13key)
+    return dec.decode('utf8')
+
+def Challenge13():
+    # request a valid encrypted block where we know the second block will be a padded 'admin'
+    admin = AES.PadPKCS7(b'admin',16)
+    adminenc= C13_encrypted_user_input('AAAAAAAAAA'+admin.decode('utf8')+'abc.net')
+    adminblock = adminenc[16:32]
+
+    # substitute the adminblock at the end of a regular block
+    enc = C13_encrypted_user_input('01234@abc.net')
+    encadmin = enc[:-16]+adminblock
+    dec = C13_decode_encrypted_profile(encadmin)                                   
+    print(kv_parser(dec))
+
+
 def main():
 
-    #Challenge11()
-    #return None
-
-    unknown_string = Challenge12()
-    print("Found: ",unknown_string)
-
+    # Challenge11()
+    # unknown_string = Challenge12()
+    Challenge13()
+   
     print("hey")   
   
 if __name__== "__main__":
