@@ -7,6 +7,8 @@ import random
 from enum import Enum
 import pickle
 import binascii
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 challenge12key = b'f56f1855a2d09d0e5de5532cf5c583ca'
 
@@ -289,6 +291,32 @@ def AESOracle2(dat):
 
     return mode
 
+def EncryptForChallenge12_CypherModule(myString,maxblocks=0,dropblocks=0):
+    unk_raw = ("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
+           "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
+           "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg"
+           "YnkK")
+    unknown_string = base64.b64decode(unk_raw)
+    if dropblocks!=0:
+        unknown_string=unknown_string[16*dropblocks:]
+        
+    dat = myString+unknown_string
+    if maxblocks!=0:
+        dat=dat[:maxblocks*16]
+
+    dat = AES.PadPKCS7(dat,16)
+
+    cipher = Cipher(algorithms.AES(challenge12key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    enc = encryptor.update(dat) + encryptor.finalize()
+    return enc
+
+def AESEncryptForChallenge12_CypherModule(dat):
+    cipher = Cipher(algorithms.AES(challenge12key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    enc = encryptor.update(dat) + encryptor.finalize()
+    return enc
+
 def EncryptForChallenge12(myString,maxblocks=0,dropblocks=0):
     unk_raw = ("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
            "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
@@ -321,7 +349,8 @@ def Challenge12():
     encprior = b''
     for i in range(5,50):
          datbefore=bytes('A','utf8')*i
-         enc = EncryptForChallenge12(datbefore)
+         # enc = EncryptForChallenge12(datbefore)
+         enc = EncryptForChallenge12_CypherModule(datbefore)
          if enc[:i-1]==encprior[:i-1]:
              blocksize = i-1
              
@@ -331,7 +360,7 @@ def Challenge12():
          encprior=enc[:i]
 
     datbefore=bytes('A','utf8')*blocksize*2
-    enc = EncryptForChallenge12(datbefore)
+    enc = EncryptForChallenge12_CypherModule(datbefore)
     print("AESMode:",AESOracle(enc))
 
     unknown_string = b''
@@ -340,14 +369,15 @@ def Challenge12():
 
         for p in range(0,16):
             datbefore = bytes('A','utf8')*(blocksize-(p+1)) # +plaintext
-            enc = EncryptForChallenge12(datbefore,2,block)
+            enc = EncryptForChallenge12_CypherModule(datbefore,2,block)
             lookup = enc[:16]
 
 
             for i in ascii_order(): # range(256):
                 # dat = datbefore+plaintext+bytes(chr(i),'utf8')
                 dat = datbefore+plaintext+bytes(chr(i),'utf8')
-                enc = AES.EncryptBlocksECB(dat,challenge12key)
+                # enc = AES.EncryptBlocksECB(dat,challenge12key)
+                enc = AESEncryptForChallenge12_CypherModule(dat)
                 if lookup==enc[:16]:
                     plaintextchar = bytes(chr(i),'utf8')
                     break
@@ -380,8 +410,8 @@ def Challenge11():
 
 def main():
 
-    Challenge11()
-    return None
+    #Challenge11()
+    #return None
 
     unknown_string = Challenge12()
     print("Found: ",unknown_string)
