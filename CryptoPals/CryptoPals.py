@@ -289,18 +289,39 @@ def AESOracle2(dat):
 
     return mode
 
-def Challenge12():
+def EncryptForChallenge12(myString,maxblocks=0,dropblocks=0):
     unk_raw = ("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
            "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
            "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg"
            "YnkK")
     unknown_string = base64.b64decode(unk_raw)
+    if dropblocks!=0:
+        unknown_string=unknown_string[16*dropblocks:]
+        
+    dat = myString+unknown_string
+    if maxblocks!=0:
+        dat=dat[:maxblocks*16]
+    enc = AES.EncryptBlocksECB(dat,challenge12key)
+    return enc
+
+def ascii_order():
+    x = EnglishTextDist()
+    x = sorted(x.items(), key=lambda kv: kv[1], reverse=True)
+    x = [key for key,val in x]
+    lower = ''.join(x)
+    upper = lower.upper()
+    order = lower+upper+' 0123456789:.?!"'
+    ord_myascii= [ord(o) for o in order]
+    ord_nonascii = list(set(i for i in range(256))-set(ord_myascii))
+    return ord_myascii+ord_nonascii
+
+
+def Challenge12():   
 
     encprior = b''
     for i in range(5,50):
-         beforedat=bytes('A','utf8')*i
-         dat = beforedat+unknown_string
-         enc = AES.EncryptBlocksECB(dat,challenge12key)
+         datbefore=bytes('A','utf8')*i
+         enc = EncryptForChallenge12(datbefore)
          if enc[:i-1]==encprior[:i-1]:
              blocksize = i-1
              
@@ -309,37 +330,35 @@ def Challenge12():
              break
          encprior=enc[:i]
 
-    beforedat=bytes('A','utf8')*blocksize*2
-    dat = beforedat+unknown_string
-    enc = AES.EncryptBlocksECB(dat,challenge12key)
-    print("AESMode:",AESOracle2(enc))
+    datbefore=bytes('A','utf8')*blocksize*2
+    enc = EncryptForChallenge12(datbefore)
+    print("AESMode:",AESOracle(enc))
 
-    datbefore = bytes('A','utf8')*(blocksize-1)
-    firstchardict = dict()
-    for i in range(256):
-        dat = datbefore+bytes(chr(i),'utf8')
-        enc = AES.EncryptBlocksECB(dat,challenge12key)
-        firstchardict[enc[:16]]=bytes(chr(i),'utf8')
+    unknown_string = b''
+    for block in range(0,4):
+        plaintext=b''
 
-    datbefore = bytes('A','utf8')*(blocksize-1)
-    dat = datbefore+unknown_string
-    enc = AES.EncryptBlocksECB(dat,challenge12key)
-    lookup = enc[:16]
-    firstchar = firstchardict[lookup]
-    print("The first char of the unknown string is: ",firstchar)
+        for p in range(0,16):
+            datbefore = bytes('A','utf8')*(blocksize-(p+1)) # +plaintext
+            enc = EncryptForChallenge12(datbefore,2,block)
+            lookup = enc[:16]
+
+
+            for i in ascii_order(): # range(256):
+                # dat = datbefore+plaintext+bytes(chr(i),'utf8')
+                dat = datbefore+plaintext+bytes(chr(i),'utf8')
+                enc = AES.EncryptBlocksECB(dat,challenge12key)
+                if lookup==enc[:16]:
+                    plaintextchar = bytes(chr(i),'utf8')
+                    break
+
+            print("The {} char of the unknown string is: {}".format(p,plaintextchar))
+            plaintext+=plaintextchar
+        unknown_string += plaintext
 
     return unknown_string
 
-
-
-
-
-
-def main():
-
-    # Challenge12()
-    # return None
-
+def Challenge11():
     filename = 'aesrec2.pickle'
     count = 100
     # generate(filename,count)
@@ -359,6 +378,13 @@ def main():
 
     print("Percent correct {} of {} : {}".format(correctCount, count, 100*correctCount/count))
 
+def main():
+
+    Challenge11()
+    return None
+
+    unknown_string = Challenge12()
+    print("Found: ",unknown_string)
 
     print("hey")   
   
