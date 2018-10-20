@@ -545,7 +545,14 @@ def main():
     # Challenge11()
     # unknown_string = Challenge12()
     # Challenge13()
-    Challenge14()
+    # Challenge14()
+
+    try:
+        t = b'1234\x02\x03'
+        AES.ValidatePKCS7(t)
+    except AES.PKCS7Error as e:
+        print(e)
+
    
     print("hey")   
   

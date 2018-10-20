@@ -2,6 +2,11 @@ import numpy as np
 import binascii
 import GaliousMath
 
+class PKCS7Error(Exception):
+    #def __init__(self,*args,**kwargs):
+    #    Exception.__init__(self,*args,**kwargs)
+    pass
+
 def XOR(byteArray1, byteArray2):
     return bytes(a ^ b for a, b in zip(byteArray1,byteArray2))
 
@@ -205,6 +210,19 @@ def PadPKCS7(bin,blocksize):
     remainder = blocksize-(len(bin) % blocksize)
     pad=bytes(chr(remainder),'utf8')
     return bin+pad*remainder
+
+def ValidatePKCS7(bin):
+    remainder = bin[-1]
+    act_pad = bin[-remainder:]
+    exp_pad = bytes(chr(remainder)*remainder,'utf8')
+    valid=act_pad==exp_pad
+    if not valid:
+        raise PKCS7Error("padding bytes not as expected")
+
+def RemovePKCS7(bin):
+    ValidatePKCS7(bin)
+    remainder = bin[-1]
+    return bin[:-remainder]
 
 def EncryptBlocksCBC(str,key,iv,maxblocks=0):
     retBytes = b''

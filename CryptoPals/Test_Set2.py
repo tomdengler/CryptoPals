@@ -28,5 +28,12 @@ class Test_Set2(unittest.TestCase):
         dec1 = AES.DecryptBlocksCBC(enc1,randkey,iv)
         self.assertEqual(dat,dec1)
 
+    def test_c15_validate_padding(self):
+        t = AES.RemovePKCS7(b"ICE ICE BABY\x04\x04\x04\x04")
+        self.assertEqual(t,b"ICE ICE BABY")
+        bad = b"ICE ICE BABY\x05\x05\x05\x05"
+        with self.assertRaises(AES.PKCS7Error):
+            t = AES.RemovePKCS7(bad)
+
 if __name__ == '__main__':
     unittest.main()
