@@ -340,6 +340,7 @@ def ascii_order():
     lower = ''.join(x)
     upper = lower.upper()
     order = lower+upper+' 0123456789:.?!"'
+    # order = upper+lower+' 0123456789:.?!"'
     ord_myascii= [ord(o) for o in order]
     ord_nonascii = list(set(i for i in range(256))-set(ord_myascii))
     return ord_myascii+ord_nonascii
@@ -373,9 +374,7 @@ def Challenge12():
 
 
             for i in ascii_order(): # range(256):
-                # dat = datbefore+plaintext+bytes(chr(i),'utf8')
                 dat = datbefore+plaintext+bytes(chr(i),'utf8')
-                # enc = AES.EncryptBlocksECB(dat,challenge12key)
                 enc = AESEncryptForChallenge12_CypherModule(dat)
                 if lookup==enc[:16]:
                     plaintextchar = bytes(chr(i),'utf8')
@@ -449,12 +448,104 @@ def Challenge13():
     dec = C13_decode_encrypted_profile(encadmin)                                   
     print(kv_parser(dec))
 
+def Challenge14_GetEncrypted(my_string):
+    unk_raw = ("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
+           "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
+           "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg"
+           "YnkK")
+    unknown_string = base64.b64decode(unk_raw)
+    random_prefix = RandomBytes(random.randint(0,48))
+    dat = random_prefix+bytes(my_string,'utf8')+unknown_string
+    dat = AES.PadPKCS7(dat,16)
+
+    cipher = Cipher(algorithms.AES(challenge12key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    enc = encryptor.update(dat) + encryptor.finalize()
+    return enc
+
+
+def Challenge14():
+    myText = "A"*32
+    enc1 = Challenge14_GetEncrypted(myText)
+    
+    diff = False
+    while not diff:
+        enc2 = Challenge14_GetEncrypted(myText)
+        diff = enc1[-16:]!=enc2[-16:]
+    chunks1 = chunks(enc1,16)
+    chunks2 = chunks(enc2,16)
+
+    chunks1_pos = 0
+    for c in chunks1:
+        if c in chunks2:
+            break
+        chunks1_pos+=1
+    aaa_chunk = c
+
+    # now make AAA be on a chunk boundary
+    found = False
+    myText = "A"*16
+    while not found:
+        enc = Challenge14_GetEncrypted(myText)
+        found = aaa_chunk in chunks(enc,16)
+
+    enc_chunks = chunks(enc,16)
+    last_chunk = enc_chunks[-1]
+    aaa_pos = enc_chunks.index(aaa_chunk)
+    lookup_pos = aaa_pos+1
+    lookup = enc_chunks[lookup_pos]
+    lookup_from_end = lookup_pos-len(enc_chunks)
+
+    
+    unknown_string = '' 
+    plaintext = '' 
+
+    for p in range(0,16):
+        for i in ascii_order():
+
+            # get target enc bytes
+            myText = "A"*(31-p)+plaintext+chr(i)
+            found = False
+            while not found:
+                enc = Challenge14_GetEncrypted(myText)
+                enc_chunks = chunks(enc,16)
+                found = (aaa_chunk in enc_chunks) and (enc_chunks[-1]==last_chunk)
+            aaa_pos = enc_chunks.index(aaa_chunk)
+            target = enc_chunks[aaa_pos+1]
+
+            #get enc bytes of last chunk when mytext is 1 bytes less
+            found  = False
+            myText = "A"*16 + "B"*(15-p)
+            while not found:
+                enc = Challenge14_GetEncrypted(myText)    
+                enc_chunks = chunks(enc,16)
+                found = aaa_chunk in enc_chunks
+            last_chunk_15 = enc_chunks[-1]
+
+            # check shortened mytext
+            found = False
+            myText = "A"*(15-p)
+            while not found:
+                enc = Challenge14_GetEncrypted(myText)    
+                enc_chunks = chunks(enc,16)
+                found = last_chunk_15 == enc_chunks[-1]
+
+            if target in enc_chunks:
+                plaintextchar = chr(i)
+                break
+
+        print("The {} char of the unknown string is: {}".format(p,plaintextchar))
+        plaintext+=plaintextchar
+        unknown_string += plaintext
+
+    return None
 
 def main():
 
     # Challenge11()
     # unknown_string = Challenge12()
-    Challenge13()
+    # Challenge13()
+    Challenge14()
    
     print("hey")   
   
