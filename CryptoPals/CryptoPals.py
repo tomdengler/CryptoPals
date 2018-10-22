@@ -12,6 +12,7 @@ from cryptography.hazmat.backends import default_backend
 
 challenge12key = b'f56f1855a2d09d0e5de5532cf5c583ca'
 challenge13key = challenge12key
+challenge16key = challenge12key
 
 def HexStringToBase64(input):
     return base64.b64encode( bytearray.fromhex(input))
@@ -540,18 +541,77 @@ def Challenge14():
 
     return None
 
-def main():
-
-    # Challenge11()
-    # unknown_string = Challenge12()
-    # Challenge13()
-    # Challenge14()
-
+def Challenge15():
     try:
         t = b'1234\x02\x03'
         AES.ValidatePKCS7(t)
     except AES.PKCS7Error as e:
         print(e)
+
+def Challenge16_enc_string(s):
+    middle = s.replace(";","")
+    middle = middle.replace("=","")
+    plaintext = "comment1=cooking%20MCs;userdata=" + middle + ";comment2=%20like%20a%20pound%20of%20bacon"
+    plaintext = bytes(plaintext,'utf8')
+    plaintext = AES.PadPKCS7(plaintext,16)
+    iv = b'\x00'*16
+    key = challenge16key
+    enc = AES.EncryptBlocksCBC(plaintext,key,iv);
+    return enc
+
+def Challenge16_dec_string(dat):
+    iv = b'\x00'*16
+    key = challenge16key
+    dec = AES.DecryptBlocksCBC(dat,key,iv)
+    # return dec.decode('utf8')
+    return dec
+
+def Challenge16_check(s,kv):
+    splitted = s.split(";")
+    return kv in splitted
+
+
+def Challenge16():
+
+    # ; is ascii dec code 59 : 59 - 8 is 51 which is '3'
+    # = is ascii dec code 61 : 61 - 8 is 53 which is '5'
+    my_buf_string = "xxxxxxxxxxxxxxxx"
+    my_admin_string = "3admin5true3"
+    mystring = my_buf_string+my_admin_string
+    enc = Challenge16_enc_string(mystring)
+    dec = Challenge16_dec_string(enc)
+    pos = dec.decode('utf8').find(my_buf_string)
+
+    encmod = bytearray(enc)
+    newbyte = encmod[pos] ^ 8
+    encmod[pos]=newbyte 
+    pos = pos+6
+    newbyte = encmod[pos] ^ 8
+    encmod[pos]=newbyte
+    pos = pos+5
+    newbyte = encmod[pos] ^ 8
+    encmod[pos]=newbyte
+    decmod = Challenge16_dec_string(encmod)
+
+    # print("before:",dec)
+    # print("after :",decmod)
+
+    decoded = decmod.decode('utf8','ignore')
+    success = Challenge16_check(decoded,"admin=true")
+    if success:
+        print("you did it!!!!!!!")
+    else:
+        print("nope")
+
+
+def main():
+
+    # Challenge11()
+    # unknown_string = Challenge12()
+    # Challenge13()
+    # Challenge14
+    # Challenge15()
+    Challenge16()   
 
    
     print("hey")   
